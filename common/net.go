@@ -25,6 +25,10 @@ type AcceptConn struct {
 	err  error
 }
 
+var quicConfig = &quic.Config{
+	CreatePaths: true,
+}
+
 func NewQuicListener(l quic.Listener) *QuicListener {
 	ql := &QuicListener{
 		Listener:     l,
@@ -36,7 +40,7 @@ func NewQuicListener(l quic.Listener) *QuicListener {
 
 func (ql *QuicListener) doAccept() {
 	for {
-		sess, err := ql.Listener.Accept(context.TODO())
+		sess, err := ql.Listener.Accept()
 		if err != nil {
 			log.Error("accept session failed:%v", err)
 			continue
@@ -45,7 +49,7 @@ func (ql *QuicListener) doAccept() {
 
 		go func(sess quic.Session) {
 			for {
-				stream, err := sess.AcceptStream(context.TODO())
+				stream, err := sess.AcceptStream()
 				if err != nil {
 					log.Notice("accept stream failed:%v", err)
 					sess.CloseWithError(2020, "AcceptStream error")
@@ -99,7 +103,7 @@ func (qd *QuicDialer) Dial(network, addr string) (net.Conn, error) {
 		sess, err := quic.DialAddr(addr, &tls.Config{
 			InsecureSkipVerify: qd.skipCertVerify,
 			NextProtos:         []string{KQuicProxy},
-		}, nil)
+		}, quicConfig)
 		if err != nil {
 			log.Error("dial session failed:%v", err)
 			return nil, err
