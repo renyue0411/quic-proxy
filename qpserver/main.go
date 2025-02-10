@@ -25,6 +25,11 @@ func main() {
 		verbose    bool
 		pprofile   bool
 	)
+	
+	var quicConfig = &quic.Config{
+		CreatePaths: true,
+	}
+	
 	flag.StringVar(&listenAddr, "l", ":443", "listen addr (udp port only)")
 	flag.StringVar(&cert, "cert", "", "cert path")
 	flag.StringVar(&key, "key", "", "key path")
@@ -52,7 +57,7 @@ func main() {
 	}
 	username, password := parts[0], parts[1]
 
-	listener, err := quic.ListenAddr(listenAddr, generateTLSConfig(cert, key), nil)
+	listener, err := quic.ListenAddr(listenAddr, generateTLSConfig(cert, key), quicConfig)
 	if err != nil {
 		log.Error("listen failed:%v", err)
 		return
